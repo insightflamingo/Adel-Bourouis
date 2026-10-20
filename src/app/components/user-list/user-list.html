@@ -1,0 +1,70 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <!-- En-tête et barre de recherche -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+        Membres de l'Équipe
+        <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+          {{ filteredUsers().length }}
+        </span>
+      </h2>
+      <p class="text-sm text-slate-500 mt-1">Vue d’ensemble des collaborateurs et de leurs tâches assignées</p>
+    </div>
+
+    <div class="relative w-full md:w-80">
+      <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+      <input
+        type="text"
+        placeholder="Rechercher par nom, rôle ou email..."
+        [(ngModel)]="searchQuery"
+        class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-xs transition-all"
+      />
+    </div>
+  </div>
+
+  <!-- Vue détaillée des projets de l'utilisateur sélectionné -->
+  @if (selectedUser(); as selected) {
+    <div class="mb-8 p-6 rounded-2xl bg-white border border-indigo-100 shadow-sm space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900">
+            Tâches assignées à <span class="text-indigo-600">{{ selected.name }}</span>
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">{{ selected.role }} &bull; {{ selected.email }}</p>
+        </div>
+        <button
+          type="button"
+          (click)="selectedUser.set(null)"
+          class="text-xs px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold cursor-pointer transition-colors"
+        >
+          Fermer
+        </button>
+      </div>
+
+      <app-user-project-group
+        [user]="selected"
+        [projects]="projects()"
+      />
+    </div>
+  }
+
+  <!-- Grille responsive des cartes utilisateurs -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @for (user of filteredUsers(); track user.id) {
+      <app-user-card
+        [user]="user"
+        [projects]="projects()"
+        (userSelected)="onUserSelected($event)"
+      />
+    } @empty {
+      <app-empty-state
+        title="Aucun utilisateur trouvé"
+        [message]="searchQuery() ? 'Aucun membre ne correspond à la recherche « ' + searchQuery() + ' ».' : 'Aucun utilisateur disponible.'"
+      />
+    }
+  </div>
+</div>

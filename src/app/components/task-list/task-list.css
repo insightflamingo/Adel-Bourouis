@@ -1,0 +1,22 @@
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-pending {
+  background-color: #fef3c7; /* Jaune / En attente */
+  color: #92400e;
+}
+
+.status-in-progress {
+  background-color: #dbeafe; /* Bleu / En cours */
+  color: #1e40af;
+}
+
+.status-completed {
+  background-color: #dcfce7; /* Vert / Terminé */
+  color: #166534;
+}
