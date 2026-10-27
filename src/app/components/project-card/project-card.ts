@@ -1,6 +1,8 @@
 import { Component, computed, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Project as ProjectModel } from "../../features/projects/models/project.model";
+import { Task as TaskModel } from "../../features/projects/models/task.model";
+import { User } from '../../features/projects/models/user.model';
 import { TaskList } from '../task-list/task-list';
 import { HighlightDirective } from '../../shared/directives/highlight.directive';
 
@@ -12,13 +14,37 @@ import { HighlightDirective } from '../../shared/directives/highlight.directive'
 })
 export class ProjectCard {
   readonly project = input.required<ProjectModel>();
+  readonly users = input<User[]>([]);
   projectSelected = output<ProjectModel>();
+
+  readonly taskStatusChange = output<{ projectId: number; taskId: number; newStatus: TaskModel['status'] }>();
+  readonly taskDelete = output<{ projectId: number; taskId: number }>();
+
+  onTaskStatusChange(event: { taskId: number; newStatus: TaskModel['status']; projectId?: number }): void {
+    this.taskStatusChange.emit({
+      projectId: this.project().id,
+      taskId: event.taskId,
+      newStatus: event.newStatus,
+    });
+  }
+
+  onTaskDelete(event: { taskId: number; projectId?: number }): void {
+    this.taskDelete.emit({
+      projectId: this.project().id,
+      taskId: event.taskId,
+    });
+  }
+
+  readonly completedTasksCount = computed<number>(() => {
+    const tasks = this.project().tasks;
+    if (!tasks || tasks.length === 0) return 0;
+    return tasks.filter((t) => t.status === 'Terminé').length;
+  });
 
   readonly completionRate = computed<number | null>(() => {
     const tasks = this.project().tasks;
     if (!tasks || tasks.length === 0) return null;
-    const completedTasks = tasks.filter(t => t.status === 'Terminé').length;
-    return completedTasks / tasks.length;
+    return this.completedTasksCount() / tasks.length;
   });
 
   readonly averageCostPerTask = computed<number | null>(() => {

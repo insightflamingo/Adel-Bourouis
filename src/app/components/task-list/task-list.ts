@@ -1,32 +1,46 @@
-import { Component, inject, input, signal } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { Task as TaskModel } from "../../features/projects/models/task.model";
-import { UserService } from '../../core/services/user.service';
 import { User } from '../../features/projects/models/user.model';
+import { TaskItem } from '../../features/projects/components/task-item/task-item';
 
-import { DatePipe, NgClass } from '@angular/common';
-import { TruncatePipe } from '../../shared/pipes/truncate.pipe';
-import { DeadlinePipe } from '../../shared/pipes/deadline.pipe';
-import { HighlightDirective } from '../../shared/directives/highlight.directive';
-import { OverdueDirective } from '../../shared/directives/overdue.directive';
-import { TooltipDirective } from '../../shared/directives/tooltip.directive';
+export type TaskFilter = 'Toutes' | 'En cours' | 'Terminé';
 
 @Component({
-  imports: [DatePipe, NgClass, TruncatePipe, DeadlinePipe, HighlightDirective, OverdueDirective, TooltipDirective],
+  imports: [TaskItem],
   selector: 'app-task-list',
   styleUrl: './task-list.css',
   templateUrl: './task-list.html',
 })
 export class TaskList {
-  private readonly userService = inject(UserService);
-  private readonly users = signal<User[]>([]);
-
   readonly tasks = input.required<TaskModel[]>();
   readonly showAssignee = input<boolean>(true);
+  readonly projectId = input<number>();
+  readonly users = input<User[]>([]);
 
-  constructor() {
-    this.userService.getUsers().subscribe((users) => {
-      this.users.set(users);
-    });
+  readonly taskStatusChange = output<{ taskId: number; newStatus: TaskModel['status']; projectId?: number }>();
+  readonly taskDelete = output<{ taskId: number; projectId?: number }>();
+
+  readonly statusFilter = signal<TaskFilter>('Toutes');
+
+  readonly inProgressCount = computed<number>(() =>
+    this.tasks().filter((t) => t.status === 'En cours').length
+  );
+
+  readonly completedCount = computed<number>(() =>
+    this.tasks().filter((t) => t.status === 'Terminé').length
+  );
+
+  readonly filteredTasks = computed<TaskModel[]>(() => {
+    const filter = this.statusFilter();
+    const list = this.tasks();
+    if (filter === 'Toutes') {
+      return list;
+    }
+    return list.filter((t) => t.status === filter);
+  });
+
+  setFilter(filter: TaskFilter): void {
+    this.statusFilter.set(filter);
   }
 
   getAssigneeName(assigneeId?: number): string | undefined {
@@ -34,13 +48,18 @@ export class TaskList {
     return this.users().find((u) => u.id === assigneeId)?.name;
   }
 
-  isTaskOverdue(task: TaskModel): boolean {
-    if (task.status === 'Terminé' || !task.dueDate) return false;
-    const due = new Date(task.dueDate);
-    if (isNaN(due.getTime())) return false;
-    const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    return dueDay.getTime() < today.getTime();
+  onTaskStatusChange(taskId: number, newStatus: TaskModel['status']): void {
+    this.taskStatusChange.emit({
+      taskId,
+      newStatus,
+      projectId: this.projectId(),
+    });
+  }
+
+  onTaskDelete(taskId: number): void {
+    this.taskDelete.emit({
+      taskId,
+      projectId: this.projectId(),
+    });
   }
 }

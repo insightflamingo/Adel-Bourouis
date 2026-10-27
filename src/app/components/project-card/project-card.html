@@ -76,6 +76,15 @@
     @if (project().tasks.length > 0) {
       <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
         <div class="flex items-center justify-between text-sm">
+          <span class="text-slate-600 font-medium">
+            Tâches terminées
+          </span>
+          <span class="font-bold text-slate-900">
+            {{ completedTasksCount() }} / {{ project().tasks.length }}
+          </span>
+        </div>
+
+        <div class="flex items-center justify-between text-sm">
           <span class="text-slate-600 font-medium">Taux de réalisation</span>
           <span class="font-bold text-slate-900">{{ completionRate() | percent:'1.0-0' }}</span>
         </div>
@@ -117,20 +126,24 @@
       </div>
     </div>
 
-    <!-- Section Tâches : 3 premières tâches -->
+    <!-- Section Tâches -->
     <div class="pt-4 border-t border-slate-100">
       <div class="flex items-center justify-between mb-3">
         <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">
-          Aperçu des tâches
+          Tâches du projet
         </h4>
-        @if (project().tasks.length > 3) {
-          <span class="text-xs font-medium text-slate-500">
-            3 sur {{ project().tasks.length }} tâches
-          </span>
-        }
+        <span class="text-xs font-medium text-slate-500">
+          {{ project().tasks.length }} tâche{{ project().tasks.length > 1 ? 's' : '' }}
+        </span>
       </div>
-      <div class="max-h-60 overflow-y-auto pr-1">
-        <app-task-list [tasks]="project().tasks | slice:0:3" />
+      <div class="max-h-72 overflow-y-auto pr-1">
+        <app-task-list
+          [tasks]="project().tasks"
+          [projectId]="project().id"
+          [users]="users()"
+          (taskStatusChange)="onTaskStatusChange($event)"
+          (taskDelete)="onTaskDelete($event)"
+        />
       </div>
     </div>
   </div>
